@@ -1,6 +1,5 @@
 import React from 'react'
 import './index.css';
-import Dashboard from './Components/Dashboard/Dashboard';
 import {
   BrowserRouter as Router,
   Route,
@@ -19,7 +18,6 @@ function App() {
     <Router>
       <Routes>
       <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/report" element={<Report />} />       
         <Route path="/budget" element={<Badget />} />

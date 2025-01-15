@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { PlusCircle, Edit2, Trash2, DollarSign, X } from 'lucide-react';
-import Sidebar from './Dashboard';
+import Sidebar from './Sidebar';
 import Footer from './Footer';
 
 const Transaction = () => {
