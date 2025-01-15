@@ -9,9 +9,9 @@ const Footer = () => {
         </p>
         <p className="text-xs">
           Follow us on:
-          <a href="#" className="text-blue-400 hover:underline ml-1">Facebook</a>,
-          <a href="#" className="text-blue-400 hover:underline ml-1">Twitter</a>,
-          <a href="#" className="text-blue-400 hover:underline ml-1">Instagram</a>
+          <a href="/facebook" className="text-blue-400 hover:underline ml-1">Facebook</a>,
+          <a href="/twitter" className="text-blue-400 hover:underline ml-1">Twitter</a>,
+          <a href="/instagram" className="text-blue-400 hover:underline ml-1">Instagram</a>
         </p>
       </div>
     </footer>

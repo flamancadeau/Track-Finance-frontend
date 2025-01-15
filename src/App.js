@@ -1,12 +1,10 @@
 import React from 'react'
-import Sidebar from './Components/Dashboard/Sidebar'
 import './index.css';
 import Dashboard from './Components/Dashboard/Dashboard';
 import {
   BrowserRouter as Router,
   Route,
   Routes,
-  Navigate,
 } from "react-router-dom";
 import Transaction from './Components/Dashboard/Transaction';
 import Login from './pages/Login';
