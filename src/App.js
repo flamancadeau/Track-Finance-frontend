@@ -18,10 +18,10 @@ function App() {
     // <Sidebar/>
     <Router>
       <Routes>
+      <Route path="/" element={<Home />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/report" element={<Report />} />
-        <Route path="/home" element={<Home />} />
+        <Route path="/report" element={<Report />} />       
         <Route path="/budget" element={<Badget />} />
         <Route path="/list" element={<TransactionList />} />
         <Route path="/transaction" element={<Transaction />} />
