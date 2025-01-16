@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true); // Default to expanded on larger screens
@@ -8,7 +8,7 @@ const Sidebar = () => {
   // Set up a window resize listener to detect screen size
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1024) {  // lg screen size and below
+      if (window.innerWidth < 768) {  // md screen size and below
         setIsSmallScreen(true);
         setIsOpen(false);  // Automatically minimize the sidebar on small screens
       } else {
@@ -30,7 +30,7 @@ const Sidebar = () => {
   }, []);
 
   return (
-    <div className={`bg-gray-800 text-white h-screen ${isOpen ? 'w-64' : 'w-20'} lg:w-20 xl:w-64`}>
+    <div className={`bg-gray-800 text-white h-screen ${isOpen ? 'w-64' : 'w-20'}`}>
       <div className="flex justify-between items-center p-4">
         <h1 className={`font-bold ${isOpen ? 'text-xl' : 'text-xs'}`}>
           {isOpen ? 'My Finance App' : 'MFA'}
@@ -68,11 +68,23 @@ const Sidebar = () => {
   );
 };
 
-const SidebarItem = ({ icon, text, isOpen, to }) => (
-  <Link to={to} className="flex items-center p-4 hover:bg-gray-700 transition-colors duration-200">
-    <span className="text-lg mr-4">{icon}</span>
-    {isOpen && <span>{text}</span>}
-  </Link>
-);
+const SidebarItem = ({ icon, text, isOpen, to }) => {
+  const location = useLocation();
+
+  // Check if the current path matches the SidebarItem 'to' path
+  const isActive = location.pathname === to;
+
+  return (
+    <Link
+      to={to}
+      className={`flex items-center p-4 hover:bg-gray-700 transition-colors duration-200 ${
+        isActive ? 'bg-gray-600' : ''
+      }`}
+    >
+      <span className="text-lg mr-4">{icon}</span>
+      {isOpen && <span>{text}</span>}
+    </Link>
+  );
+};
 
 export default Sidebar;

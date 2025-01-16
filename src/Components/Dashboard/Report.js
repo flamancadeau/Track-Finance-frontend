@@ -35,7 +35,7 @@ const Report = () => {
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
-      <div className="flex-1 ml-15  transition-all duration-300 overflow-y-auto h-a">
+      <div className="flex-1 ml-15  transition-all duration-300 overflow-y-auto h-auto pb-24">
         <div className="p-4">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-center mb-6">

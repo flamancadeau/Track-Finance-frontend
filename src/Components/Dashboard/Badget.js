@@ -101,7 +101,7 @@ const BudgetTracker = () => {
   return (
     <div className="flex h-screen">
       <Sidebar />
-      <div className="flex-1 p-4 bg-gray-100 transition-all duration-300 overflow-y-auto h-auto mb-12">
+      <div className="flex-1 p-4 bg-gray-100 transition-all duration-300 overflow-y-auto h-auto pb-24">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center justify-center">

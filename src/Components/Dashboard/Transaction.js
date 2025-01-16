@@ -108,12 +108,12 @@ const Transaction = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden h-auto pb-24">
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-6xl mx-auto">
             {/* Header with Stats and Add Button */}
             <div className="flex justify-between items-center mb-6">
-              <div className="grid grid-cols-3 gap-4 flex-1">
+              <div className="grid md:grid-cols-3 gap-4 flex-1">
                 <div className="bg-white rounded-lg shadow-sm p-4">
                   <h3 className="text-sm font-semibold text-gray-700">Spending Limit</h3>
                   <p className="text-lg font-bold text-blue-600">${spendingLimit.toFixed(2)}</p>

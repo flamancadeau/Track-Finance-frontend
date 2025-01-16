@@ -76,8 +76,8 @@ const TransactionList = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto h-auto pb-24">
+        <div className="p-6">
           <div className="max-w-6xl mx-auto">
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center justify-center">

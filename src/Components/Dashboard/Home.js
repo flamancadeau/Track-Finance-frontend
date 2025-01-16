@@ -113,9 +113,9 @@ const Home = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 h-auto overflow-y-auto pb-24">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Financial Dashboard</h1>
 
