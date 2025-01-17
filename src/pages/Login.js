@@ -1,19 +1,40 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate to redirect
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate(); // Initialize the useNavigate hook
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add your login logic here
+    
     if (!email || !password) {
       setError('Please fill in both fields.');
-    } else {
-      setError('');
-      // Call your login function here
-      console.log('Logging in with:', { email, password });
+      return;
+    }
+
+    try {
+      const response = await fetch('https://track-finance-backend-production.up.railway.app/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        // If the response is OK, the user is authenticated. Redirect to the home page.
+        navigate('/');
+      } else {
+        // If credentials are invalid, show an error message.
+        setError(data.message || 'Invalid credentials.');
+      }
+    } catch (error) {
+      setError('An error occurred. Please try again.');
     }
   };
 
