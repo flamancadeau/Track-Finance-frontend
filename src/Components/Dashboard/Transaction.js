@@ -11,7 +11,7 @@ const Transaction = () => {
   const [formData, setFormData] = useState({
     type: 'income',
     amount: '',
-    dateTime: '',
+    dateTime: new Date().toISOString().slice(0, 16),
     account: 'bank',
     category: '',
     subcategory: ''
@@ -178,7 +178,7 @@ const Transaction = () => {
       setFormData({
         type: 'income',
         amount: '',
-        dateTime: '',
+        dateTime: new Date().toISOString().slice(0, 16),
         account: 'bank',
         category: '',
         subcategory: ''
@@ -195,7 +195,10 @@ const Transaction = () => {
 
   // Handle edit transaction
   const handleEdit = (transaction) => {
-    setFormData(transaction);
+    setFormData({
+      ...transaction,
+      dateTime: new Date(transaction.dateTime).toISOString().slice(0, 16)
+    });
     setEditId(transaction._id);
     setIsModalOpen(true);
     toast.info("Editing transaction");
@@ -279,7 +282,7 @@ const Transaction = () => {
                   setFormData({
                     type: 'income',
                     amount: '',
-                    dateTime: '',
+                    dateTime: new Date().toISOString().slice(0, 16),
                     account: 'bank',
                     category: '',
                     subcategory: ''
@@ -298,7 +301,7 @@ const Transaction = () => {
               {Object.entries(accounts).map(([account, balance]) => (
                 <div key={account} className="bg-white rounded-lg shadow-sm p-4">
                   <h3 className="text-sm font-semibold text-gray-700 capitalize">
-                    {account === 'mobile' ? 'Mobile Money' : account}
+                    {account === 'mobile' ? 'mobile Money' : account}
                   </h3>
                   <p className="text-lg font-bold text-gray-600">${balance.toFixed(2)}</p>
                 </div>
@@ -430,7 +433,7 @@ const Transaction = () => {
                 </select>
                 {formData.type === 'expense' && (
                   <p className="mt-1 text-sm text-gray-500">
-                    Available: ${accounts[formData.account]?.toFixed(2) || '0.00'}
+           
                   </p>
                 )}
               </div>
@@ -473,7 +476,7 @@ const Transaction = () => {
                 )}
                 {(totalExpenses + parseFloat(formData.amount || 0)) > spendingLimit && (
                   <p className="text-sm text-red-600 mt-1">
-                    Warning: This transaction will exceed your spending limit
+                    Warning: This transaction will exceed your spending limit please increase your limit
                   </p>
                 )}
               </div>
@@ -508,4 +511,3 @@ const Transaction = () => {
 };
 
 export default Transaction;
-
