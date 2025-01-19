@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import { Wallet, CreditCard, Coins, DollarSign, PiggyBank, Save, PlusCircle, X } from "lucide-react";
+import "react-toastify/dist/ReactToastify.css";
+import { 
+  Wallet, 
+  CreditCard, 
+  Coins, 
+  DollarSign, 
+  PiggyBank, 
+  Save, 
+  PlusCircle, 
+  X 
+} from "lucide-react";
 import Sidebar from "./Sidebar";
 import Footer from "./Footer";
 
 const BudgetTracker = () => {
+  // State management
   const [accounts, setAccounts] = useState({
     bank: 0,
     mobileMoney: 0,
@@ -19,122 +30,133 @@ const BudgetTracker = () => {
     cash: "",
   });
   const [newSpendingLimit, setNewSpendingLimit] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Calculate Total Money
-  useEffect(() => {
-    const total = Object.values(accounts).reduce((sum, value) => sum + value, 0);
-    setTotalMoney(total);
-  }, [accounts]);
-
-  // Fetch budget data from the API on component mount
+  // Fetch initial data
   useEffect(() => {
     const fetchBudgetData = async () => {
       try {
+        setIsLoading(true);
         const response = await fetch("https://track-finance-backend-production.up.railway.app/api/badget");
         if (!response.ok) throw new Error("Failed to fetch data");
         const data = await response.json();
-        console.log("data", data);
 
-        if (data && data.budget && data.budget.accounts && typeof data.budget.accounts === 'object') {
-          setAccounts(data.budget.accounts);
-        } else {
-          toast.error("Invalid data format received from the server.");
-        }
-
-        if (data.budget.spendingLimit !== undefined) {
-          setSpendingLimit(data.budget.spendingLimit);
-        } else {
-          toast.error("Spending limit not found in the response.");
-        }
-
-        if (data.budget.totalMoney !== undefined) {
-          setTotalMoney(data.budget.totalMoney);
-        } else {
-          toast.error("Total money not found in the response.");
+        if (data?.budget?.accounts) {
+          setAccounts({
+            bank: parseFloat(data.budget.accounts.bank) || 0,
+            mobileMoney: parseFloat(data.budget.accounts.mobileMoney) || 0,
+            cash: parseFloat(data.budget.accounts.cash) || 0
+          });
+          setSpendingLimit(parseFloat(data.budget.spendingLimit) || 0);
+          setTotalMoney(parseFloat(data.budget.totalMoney) || 0);
         }
       } catch (error) {
         toast.error("Error fetching budget data: " + error.message);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchBudgetData();
   }, []);
 
-
-
-
-
-  // Handle Modal Account Data Change
+  // Handle input changes for new account
   const handleNewAccountChange = (account, value) => {
-    setNewAccount((prev) => ({
+    // Only allow numbers and decimal point
+    if (value && !/^\d*\.?\d*$/.test(value)) return;
+    
+    setNewAccount(prev => ({
       ...prev,
-      [account]: value || "",
+      [account]: value
     }));
   };
 
+  // Handle spending limit change
   const handleNewSpendingLimitChange = (value) => {
-    setNewSpendingLimit(value || "");
+    // Only allow numbers and decimal point
+    if (value && !/^\d*\.?\d*$/.test(value)) return;
+    
+    setNewSpendingLimit(value);
   };
 
-  // Toggle Modal
+  // Toggle modal
   const toggleModal = () => {
-    setShowModal((prev) => !prev);
+    setShowModal(prev => !prev);
+    // Reset form when closing
+    if (showModal) {
+      setNewAccount({
+        bank: "",
+        mobileMoney: "",
+        cash: "",
+      });
+      setNewSpendingLimit("");
+    }
   };
 
-  // Handle Submit for Adding Accounts and Spending Limit
+  // Handle form submission
   const handleAddAccounts = async () => {
-    const numSpendingLimit = parseFloat(newSpendingLimit) || spendingLimit;
-    if (!newAccount.bank && !newAccount.mobileMoney && !newAccount.cash) {
-      toast.error("Please fill at least one account field!");
-      return;
-    }
-
-    const newTotalMoney = Object.values(newAccount).reduce(
-      (sum, value) => sum + (parseFloat(value) || 0),
-      totalMoney
-    );
-
-    if (numSpendingLimit > newTotalMoney) {
-      toast.error("Spending limit cannot exceed total money!");
-      return;
-    }
-
-    setAccounts((prev) => ({
-      bank: prev.bank + (parseFloat(newAccount.bank) || 0),
-      mobileMoney: prev.mobileMoney + (parseFloat(newAccount.mobileMoney) || 0),
-      cash: prev.cash + (parseFloat(newAccount.cash) || 0),
-    }));
-
-    setSpendingLimit(numSpendingLimit);
-
-    const dataToSend = {
-      accounts: {
-        bank: accounts.bank + (parseFloat(newAccount.bank) || 0),
-        mobileMoney: accounts.mobileMoney + (parseFloat(newAccount.mobileMoney) || 0),
-        cash: accounts.cash + (parseFloat(newAccount.cash) || 0),
-      },
-      spendingLimit: numSpendingLimit,
-      totalMoney: newTotalMoney,
-    };
-
     try {
+      setIsLoading(true);
+      
+      // Parse all values
+      const newBankAmount = parseFloat(newAccount.bank) || 0;
+      const newMobileAmount = parseFloat(newAccount.mobileMoney) || 0;
+      const newCashAmount = parseFloat(newAccount.cash) || 0;
+      const numSpendingLimit = parseFloat(newSpendingLimit) || spendingLimit;
+
+
+      const newTotalMoney = newBankAmount + newMobileAmount + newCashAmount;
+
+ 
+      const dataToSend = {
+        accounts: {
+          bank: newBankAmount,
+          mobileMoney: newMobileAmount,
+          cash: newCashAmount
+        },
+        spendingLimit: numSpendingLimit,
+        totalMoney: newTotalMoney
+      };
+
       const response = await fetch("https://track-finance-backend-production.up.railway.app/api/badget", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify(dataToSend)
       });
+
       if (!response.ok) throw new Error("Network response was not ok");
       const responseData = await response.json();
-      toast.success("Data submitted successfully!");
-      console.log(responseData);
+
+      // Update state with response data
+      if (responseData?.budget?.accounts) {
+        setAccounts({
+          bank: parseFloat(responseData.budget.accounts.bank) || 0,
+          mobileMoney: parseFloat(responseData.budget.accounts.mobileMoney) || 0,
+          cash: parseFloat(responseData.budget.accounts.cash) || 0
+        });
+        setSpendingLimit(parseFloat(responseData.budget.spendingLimit) || 0);
+        setTotalMoney(parseFloat(responseData.budget.totalMoney) || 0);
+      }
+
+      toast.success("Budget updated successfully!");
+      setShowModal(false);
+      
+      // Reset form
+      setNewAccount({
+        bank: "",
+        mobileMoney: "",
+        cash: ""
+      });
+      setNewSpendingLimit("");
     } catch (error) {
       toast.error("Failed to submit data: " + error.message);
+    } finally {
+      setIsLoading(false);
     }
-    setShowModal(false);
   };
 
-  // Get Account Icon
+  // Get account icon helper
   const getAccountIcon = (accountType) => {
     switch (accountType) {
       case "bank":
@@ -148,7 +170,7 @@ const BudgetTracker = () => {
     }
   };
 
-  // Input Field Component
+  // Input field component
   const InputField = ({ icon: Icon, label, value, onChange, type = "number" }) => (
     <div className="mb-3">
       <div className="flex items-center">
@@ -166,6 +188,7 @@ const BudgetTracker = () => {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="0.00"
+          disabled={isLoading}
         />
       </div>
     </div>
@@ -186,6 +209,7 @@ const BudgetTracker = () => {
               <button
                 onClick={toggleModal}
                 className="flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700"
+                disabled={isLoading}
               >
                 <PlusCircle className="w-5 h-5 mr-2" />
                 Setting Budget
@@ -198,6 +222,7 @@ const BudgetTracker = () => {
                   <button
                     onClick={toggleModal}
                     className="absolute right-3 top-3 p-1.5 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                    disabled={isLoading}
                   >
                     <X className="w-4 h-4 text-gray-500" />
                   </button>
@@ -217,6 +242,7 @@ const BudgetTracker = () => {
                         value={newAccount.bank}
                         onChange={(value) => handleNewAccountChange("bank", value)}
                       />
+                      
                     </div>
 
                     <div className="col-span-2 sm:col-span-1">
@@ -252,13 +278,14 @@ const BudgetTracker = () => {
                     className="w-full mt-4 flex items-center justify-center px-4 py-2 
                              bg-blue-600 text-white font-medium rounded-lg
                              hover:bg-blue-700 transition-colors"
+                    disabled={isLoading}
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    Save Details
+                    {isLoading ? 'Saving...' : 'Save Details'}
                   </button>
 
                   <p className="text-xs text-gray-500 text-center mt-2">
-                    Amounts will be added to existing balances
+                    These values will replace your current balances
                   </p>
                 </div>
               </div>
@@ -270,11 +297,13 @@ const BudgetTracker = () => {
             </div>
 
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-              {Object.keys(accounts).map((accountType) => (
+              {Object.entries(accounts).map(([accountType, amount]) => (
                 <div key={accountType} className="bg-white p-6 rounded-lg shadow-md text-center">
                   {getAccountIcon(accountType)}
-                  <h3 className="text-lg font-semibold text-gray-800 capitalize">{accountType}</h3>
-                  <p className="text-2xl font-bold text-gray-600">${accounts[accountType].toFixed(2)}</p>
+                  <h3 className="text-lg font-semibold text-gray-800 capitalize">
+                    {accountType.replace(/([A-Z])/g, ' $1').trim()}
+                  </h3>
+                  <p className="text-2xl font-bold text-gray-600">${amount.toFixed(2)}</p>
                 </div>
               ))}
               <div className="bg-white p-6 rounded-lg shadow-md text-center">
