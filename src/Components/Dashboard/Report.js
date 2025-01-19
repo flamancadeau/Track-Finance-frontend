@@ -27,44 +27,99 @@ const Report = () => {
     );
   };
 
+  // Get date range based on report type
+  const getDateRange = (type) => {
+    const today = new Date();
+    let startDate = new Date();
+
+    switch (type) {
+      case 'weekly':
+        startDate.setDate(today.getDate() - 7);
+        break;
+      case 'monthly':
+        startDate.setDate(today.getDate() - 30);
+        break;
+      case 'yearly':
+        startDate.setDate(today.getDate() - 365);
+        break;
+      default:
+        return { start: '', end: '' };
+    }
+
+    return {
+      start: startDate.toISOString().split('T')[0],
+      end: today.toISOString().split('T')[0]
+    };
+  };
+
   // Handle report type change
   const handleReportTypeChange = (e) => {
     const newReportType = e.target.value;
     setReportType(newReportType);
-    
-    // Clear custom dates when switching to preset periods
-    if (newReportType !== 'custom') {
+
+    if (newReportType !== 'custom' && newReportType !== 'all') {
+      const { start, end } = getDateRange(newReportType);
+      setStartDate(start);
+      setEndDate(end);
+    } else {
       setStartDate('');
       setEndDate('');
     }
   };
 
-  // Handle search with updated filters
-  const handleSearch = async () => {
+  // Format date for API
+  const formatDateForAPI = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString();
+  };
+
+  // Handle generate report
+  const handleGenerateReport = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // Construct query parameters
-      const queryParams = new URLSearchParams();
-      
-      // Add report type if not custom
-      if (reportType !== 'custom') {
-        queryParams.append('reportType', reportType);
-      }
-      
-      // Add date range if custom period or dates are set
-      if ((reportType === 'custom' || reportType === 'all') && startDate && endDate) {
-        queryParams.append('startDate', startDate);
-        queryParams.append('endDate', endDate);
-      }
-      
-      // Add account type
-      if (accountType !== 'all') {
-        queryParams.append('accountType', accountType);
+      // Validate dates for custom period
+      if (reportType === 'custom' && (!startDate || !endDate)) {
+        throw new Error('Please select both start and end dates for custom period');
       }
 
-      const response = await fetch(`https://track-finance-backend-production.up.railway.app/api/DateTransactions?${queryParams.toString()}`, {
+      let queryStartDate = '';
+      let queryEndDate = '';
+
+      if (reportType === 'custom') {
+        queryStartDate = formatDateForAPI(startDate);
+        // Set end date to end of day
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        queryEndDate = endDateTime.toISOString();
+      } else if (reportType !== 'all') {
+        const { start, end } = getDateRange(reportType);
+        queryStartDate = formatDateForAPI(start);
+        const endDateTime = new Date(end);
+        endDateTime.setHours(23, 59, 59, 999);
+        queryEndDate = endDateTime.toISOString();
+      }
+
+      // Construct API URL with query parameters
+      let apiUrl = 'https://track-finance-backend-production.up.railway.app/api/DateTransactions';
+      const params = new URLSearchParams();
+
+      if (queryStartDate && queryEndDate) {
+        params.append('startDate', queryStartDate);
+        params.append('endDate', queryEndDate);
+      }
+
+      if (accountType !== 'all') {
+        params.append('accountType', accountType);
+      }
+
+      if (params.toString()) {
+        apiUrl += `?${params.toString()}`;
+      }
+
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -72,13 +127,30 @@ const Report = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch data');
+        throw new Error(`Failed to fetch data: ${response.statusText}`);
       }
 
       const data = await response.json();
-      setFilteredTransactions(Array.isArray(data) ? data : []);
+      
+      // Filter and sort transactions
+      let processedData = Array.isArray(data) ? data : [];
+      
+      if (queryStartDate && queryEndDate) {
+        const startTimestamp = new Date(queryStartDate).getTime();
+        const endTimestamp = new Date(queryEndDate).getTime();
+        
+        processedData = processedData.filter(transaction => {
+          const transactionDate = new Date(transaction.dateTime).getTime();
+          return transactionDate >= startTimestamp && transactionDate <= endTimestamp;
+        });
+      }
+
+      // Sort by date descending
+      processedData.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+
+      setFilteredTransactions(processedData);
     } catch (err) {
-      setError('Error fetching data');
+      setError(err.message || 'Error fetching data');
       console.error('Error:', err);
     } finally {
       setLoading(false);
@@ -146,7 +218,7 @@ const Report = () => {
                   </select>
                 </div>
 
-                {(reportType === 'custom' || reportType === 'all') && (
+                {(reportType === 'custom') && (
                   <>
                     <div className="space-y-2">
                       <label className="flex items-center text-gray-700 text-sm font-semibold">
@@ -157,6 +229,7 @@ const Report = () => {
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
+                        max={endDate || undefined}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                       />
                     </div>
@@ -170,6 +243,7 @@ const Report = () => {
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
+                        min={startDate || undefined}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                       />
                     </div>
@@ -194,20 +268,31 @@ const Report = () => {
                 </div>
               </div>
 
+              {/* Generate Report Button */}
               <div className="mt-6 flex justify-center">
                 <button
-                  onClick={handleSearch}
-                  className="flex items-center px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                  onClick={handleGenerateReport}
+                  disabled={loading}
+                  className="flex items-center px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Filter className="w-4 h-4 mr-2" />
-                  Generate Report
+                  {loading ? 'Generating...' : 'Generate Report'}
                 </button>
               </div>
             </div>
 
             {/* Loading or Error Messages */}
-            {loading && <p className="text-center text-gray-500">Loading...</p>}
-            {error && <p className="text-center text-red-500">{error}</p>}
+            {loading && (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-gray-500 mt-2">Loading...</p>
+              </div>
+            )}
+            {error && (
+              <div className="text-center text-red-500 bg-red-50 p-4 rounded-md mb-6">
+                {error}
+              </div>
+            )}
 
             {/* Table Section */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
